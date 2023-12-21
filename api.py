@@ -8,9 +8,12 @@ from .nodes import reset_registry
 async def ResetLoop(request):
     try:
         node_id = request.match_info["node_id"]
-        if node_id in reset_registry:
-            reset_registry[node_id].curr_x_index = 1
-            reset_registry[node_id].curr_y_index = 1
+        if node_id == "all":
+            for node_id in reset_registry:
+                reset_registry[node_id].reset()
+            return web.json_response(status=200)
+        elif node_id in reset_registry:
+            reset_registry[node_id].reset()
             return web.json_response(status=200)
         else:
             return web.json_response(dict(error="Node not found"), status=404)

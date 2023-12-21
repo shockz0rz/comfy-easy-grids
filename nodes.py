@@ -92,14 +92,21 @@ class ImageGridCommander:
         self.curr_y_index = 1
         self.last_x_count = 0
         self.last_y_count = 0
+        self.unique_id = None
     
     def __del__(self):
-        reset_registry.pop(self.unique_id, None)
+        if self.unique_id is not None and self is reset_registry.get(self.unique_id, None):
+            reset_registry.pop(self.unique_id, None)
 
     def queue_batch(self, x_count, y_count, unique_id ):
         #wish we could do this on init but there doesn't seem to be a way to get the unique_id at that point
         #there shouldn't be any need to reset before the first run in any case
-        if unique_id not in reset_registry:
+        if unique_id is not None:
+            if unique_id != self.unique_id:
+                if self.unique_id is not None and self is reset_registry.get(self.unique_id, None):
+                    reset_registry.pop(self.unique_id, None)
+                self.unique_id = unique_id
+        if self.unique_id not in reset_registry:
             reset_registry[unique_id] = self
         if x_count != self.last_x_count or y_count != self.last_y_count:
             self.last_x_count = x_count
@@ -120,6 +127,12 @@ class ImageGridCommander:
     @classmethod
     def IS_CHANGED( s, x_count, y_count ):
         return float("NaN")
+
+    def reset(self):
+        self.curr_x_index = 1
+        self.curr_y_index = 1
+        self.last_x_count = 0
+        self.last_y_count = 0
 
 class TextConcatenator:
     @classmethod
@@ -161,7 +174,11 @@ class SaveImageGrid:
         self.curr_y_size = 1
         self.curr_y_idx = 0
         self.done_flag = False
-
+        self.unique_id = None
+    
+    def __del__(self):
+        if self.unique_id is not None and self is reset_registry.get(self.unique_id, None):
+            reset_registry.pop(self.unique_id, None)
 
     @classmethod
     def INPUT_TYPES(s):
@@ -182,14 +199,18 @@ class SaveImageGrid:
     CATEGORY = "EasyGrids"
 
     def accumulate_images(self, images, x_size, y_size, filename_prefix="ComfyUI", prompt=None, extra_pnginfo=None, annotations=None, unique_id=None):
+        if unique_id is not None:
+            if unique_id != self.unique_id:
+                if self.unique_id is not None and self is reset_registry.get(self.unique_id, None):
+                    reset_registry.pop(self.unique_id, None)
+                self.unique_id = unique_id
+        if self.unique_id not in reset_registry:
+            reset_registry[unique_id] = self
         filename_prefix += self.prefix_append
         if x_size != self.curr_x_size or y_size != self.curr_y_size or self.done_flag:
             self.curr_x_size = x_size
             self.curr_y_size = y_size
-            self.curr_x_idx = 0
-            self.curr_y_idx = 0
-            self.image_grid = []
-            self.done_flag = False
+            self.reset()
         for image in images:
             self.image_grid.append(image)
             self.curr_x_idx += 1
@@ -252,8 +273,14 @@ class SaveImageGrid:
             "subfolder": subfolder,
             "type": self.type
         })
-
         return { "ui": { "images": results } }
+
+    def reset( self ):
+        self.curr_x_idx = 0
+        self.curr_y_idx = 0
+        self.image_grid = []
+        self.done_flag = False
+
 
 NODE_CLASS_MAPPINGS = {
     "ImageGridCommander": ImageGridCommander,

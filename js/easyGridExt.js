@@ -65,15 +65,50 @@ app.registerExtension({
             });
             node.addWidget( "button", "Reset Grid Loop", "ResetButton", () =>
             {
-                let req_url = "easygrids/reset/" + node.id.toString();
-                const resp = api.fetchApi(req_url, {
-					method: "POST",
-					body: "",
-                } );
-                if ( resp.status !== 200 )
+                let req_url = "easygrids/reset/" + node.id.toString(); 
+                // I have no idea if this is the right way to do this, but it seems to work!
+                api.fetchApi(req_url, {
+                    method: "POST",
+                    body: "",
+                }).then( (resp) =>
                 {
-                    console.error( "Failed to reset grid loop" );
-                }
+                    if (resp.status != 200)
+                    {
+                        console.error("Failed to reset grid loop.");
+                    }
+                });
+            });
+            node.addWidget( "button", "Reset All Loop Nodes", "ResetAllButton", () => 
+            {
+                let req_url = "easygrids/reset/all"; 
+                api.fetchApi(req_url, {
+                    method: "POST",
+                    body: "",
+                }).then( (resp) =>
+                {
+                    if (resp.status != 200)
+                    {
+                        console.error("Failed to reset all loop nodes.");
+                    }
+                });
+            });
+        }
+        else if (node.__proto__.comfyClass === "SaveImageGrid")
+        {
+            node.addWidget( "button", "Clear Stored Images", "ResetButton", () => 
+            {
+                let req_url = "easygrids/reset/" + node.id.toString(); 
+                // i do not understand promises
+                api.fetchApi(req_url, {
+                    method: "POST",
+                    body: "",
+                }).then( (resp) =>
+                {
+                    if (resp.status != 200)
+                    {
+                        console.error("Failed to clear accumulated images.");
+                    }
+                });
             });
         }
     },
