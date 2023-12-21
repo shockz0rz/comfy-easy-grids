@@ -47,30 +47,14 @@ function showWidget(widget) {
 }
 
 app.registerExtension({
-    name: "easygrids.SimpleLooper",
-    // node : 
+    name: "easygrids",
     async nodeCreated(node, app) {
-        if ( node.__proto__.comfyClass === "SimpleLooper" )
-        {
-            node.addWidget( "button", "Loop it!", "LoopButton", () => 
-            {
-                // I don't know how to javascript lol
-                const target_widget = node.widgets.find((w) => w.name === "loop_count");
-                let loop_num = target_widget.value;
-                for ( let queue_i = 0; queue_i < loop_num; queue_i++ )
-                {
-                    app.queuePrompt(1, 1);
-                }
-            })
-        }
-        else if (node.__proto__.comfyClass === "ImageGridCommander")
+        if (node.__proto__.comfyClass === "ImageGridCommander")
         {
             node.addWidget( "button", "Queue Full Grid", "QueueButton", () => 
             {
                 const x_widget = node.widgets.find((w) => w.name === "x_count");
                 const y_widget = node.widgets.find((w) => w.name === "y_count");
-                let x_slot = node.findOutputSlot( "x_index" );
-                let y_slot = node.findOutputSlot( "y_index" );
                 for ( let queue_x = 1; queue_x <= x_widget.value; queue_x++ )
                 {
                     for ( let queue_y = 1; queue_y <= y_widget.value; queue_y++ )
