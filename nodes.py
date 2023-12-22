@@ -106,7 +106,7 @@ class ImageGridCommander:
                 if self.unique_id is not None and self is reset_registry.get(self.unique_id, None):
                     reset_registry.pop(self.unique_id, None)
                 self.unique_id = unique_id
-        if self.unique_id not in reset_registry:
+        if self.unique_id not in reset_registry and self.unique_id is not None:
             reset_registry[unique_id] = self
         if x_count != self.last_x_count or y_count != self.last_y_count:
             self.last_x_count = x_count
@@ -204,7 +204,7 @@ class SaveImageGrid:
                 if self.unique_id is not None and self is reset_registry.get(self.unique_id, None):
                     reset_registry.pop(self.unique_id, None)
                 self.unique_id = unique_id
-        if self.unique_id not in reset_registry:
+        if self.unique_id not in reset_registry and self.unique_id is not None:
             reset_registry[unique_id] = self
         filename_prefix += self.prefix_append
         if x_size != self.curr_x_size or y_size != self.curr_y_size or self.done_flag:
@@ -273,6 +273,7 @@ class SaveImageGrid:
             "subfolder": subfolder,
             "type": self.type
         })
+        self.done_flag = True
         return { "ui": { "images": results } }
 
     def reset( self ):
