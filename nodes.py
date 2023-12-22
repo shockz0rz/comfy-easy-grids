@@ -1,12 +1,13 @@
 import re
-from copy import deepcopy
 import folder_paths
-from PIL import Image, ImageDraw
 import numpy as np
-from comfy.cli_args import args
 import json
-from PIL.PngImagePlugin import PngInfo
 import os.path
+
+from copy import deepcopy
+from PIL import Image, ImageDraw
+from comfy.cli_args import args
+from PIL.PngImagePlugin import PngInfo
 from .grid_types import Annotation
 
 static_x = 1
@@ -19,8 +20,8 @@ class GridFloats:
     def INPUT_TYPES(s):
         return { 
             "required": {
-                "index": ( "INT", {"default": 1, "min": 1, "max": 6 }  ),
-                "float1": ("FLOAT", {"default": 1.0, "step": 0.01 }),
+                "index": ( "INT", {"default": 1, "min": 1 } ),
+                "float1": ("FLOAT", {"default": 1.0, "step": 0.01}),
                 "float2": ("FLOAT", {"default": 1.0, "step": 0.01}),
                 "float3": ("FLOAT", {"default": 1.0, "step": 0.01}),
                 "float4": ("FLOAT", {"default": 1.0, "step": 0.01}),
@@ -66,6 +67,115 @@ class GridFloatList:
                 out_arr.append(float(val))
             self.static_text = float_list
             self.static_out_arr = deepcopy( out_arr )
+        if ( index > len(self.static_out_arr) ):
+            return ( self.static_out_arr[len(self.static_out_arr) - 1], )
+        return (self.static_out_arr[ index - 1 ],)
+
+class GridInts:
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "index": ( "INT", {"default": 1, "min": 1 }),
+                "int1": ("INT", {"default": 1, "step": 1 }),
+                "int2": ("INT", {"default": 1, "step": 1}),
+                "int3": ("INT", {"default": 1, "step": 1}),
+                "int4": ("INT", {"default": 1, "step": 1}),
+                "int5": ("INT", {"default": 1, "step": 1}),
+                "int6": ("INT", {"default": 1, "step": 1}),
+            },
+             }
+
+    RETURN_TYPES = ("INT",)
+    FUNCTION = "ReturnInt"
+    CATEGORY = "EasyGrids"
+
+    def ReturnInt( self, index: int, int1 : int, int2 : int, int3 : int, int4 : int, int5 : int, int6: int ):
+        ret_list = [int1, int2, int3, int4, int5, int6]
+        if ( index > len(ret_list) ):
+            return ( ret_list[len(ret_list) - 1], )
+        return (ret_list[ index - 1 ], )
+
+class GridIntList:
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "index": ( "INT", {"default": 1, "min": 1, "max": 100 } ),
+                "int_list": ("STRING", {"multiline": True}),
+        }}
+
+    RETURN_TYPES = ("INT",)
+    FUNCTION = "ParseAndReturnInt"
+    CATEGORY = "EasyGrids"
+
+    def __init__(self):
+        self.static_text = "" 
+        self.static_out_arr = []
+
+    def ParseAndReturnInt( self, index: int, int_list: str ):
+        if int_list != self.static_text:
+            split_str = re.split( ",|;|\s|:", int_list )
+            out_arr = []
+            for val in split_str:
+                # let the exception happen if invalid
+                out_arr.append(int(val))
+            self.static_text = int_list
+            self.static_out_arr = deepcopy( out_arr )
+        if ( index > len(self.static_out_arr) ):
+            return ( self.static_out_arr[len(self.static_out_arr) - 1], )
+        return (self.static_out_arr[ index - 1 ],)
+
+class GridStrings:
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "index": ( "INT", {"default": 1, "min": 1 }),
+                "string1": ("STRING", {"default": ""}),
+                "string2": ("STRING", {"default": ""}),
+                "string3": ("STRING", {"default": ""}),
+                "string4": ("STRING", {"default": ""}),
+                "string5": ("STRING", {"default": ""}),
+                "string6": ("STRING", {"default": ""}),
+            },
+             }
+
+    RETURN_TYPES = ("STRING",)
+    FUNCTION = "ReturnString"
+    CATEGORY = "EasyGrids"
+
+    def ReturnString( self, index: int, string1 : str, string2 : str, string3 : str, string4 : str, string5 : str, string6: str ):
+        ret_list = [string1, string2, string3, string4, string5, string6]
+        if ( index > len(ret_list) ):
+            return ( ret_list[len(ret_list) - 1], )
+        return (ret_list[ index - 1 ], )
+
+class GridStringList:
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "index": ( "INT", {"default": 1, "min": 1, "max": 100 } ),
+                "string_list": ("STRING", {"multiline": True}), 
+            }
+        }
+
+    RETURN_TYPES = ("STRING",)
+    FUNCTION = "SplitAndReturnStrings"
+    CATEGORY = "EasyGrids"
+
+    def __init__(self):
+        self.static_text = "" 
+        self.static_out_arr = []
+
+    def SplitAndReturnStrings( self, index: int, string_list: str ):
+        if string_list != self.static_text:
+            # unlike the numeric list nodes, we only want to split on newlines
+            # TODO: support manual delimiter specification?
+            split_str = re.split( "\n", string_list )
+            self.static_text = string_list
+            self.static_out_arr = deepcopy( split_str )
         if ( index > len(self.static_out_arr) ):
             return ( self.static_out_arr[len(self.static_out_arr) - 1], )
         return (self.static_out_arr[ index - 1 ],)
@@ -151,7 +261,7 @@ class TextConcatenator:
 class FloatToText:
     @classmethod
     def INPUT_TYPES(s):
-        return { "required": { "float_input": ("FLOAT", {"default": 1.0}), 
+        return { "required": { "float_input": ("FLOAT", {"default": 1.0, "step": 0.01}), 
                                "decimal_places": ("INT", {"default": 3, "min": 1, "max": 10 }), }}
 
     RETURN_TYPES = ("STRING",)
@@ -162,6 +272,18 @@ class FloatToText:
         # if this doesn't work, blame Copilot
         formatted_float = "{:.{}f}".format(float_input, decimal_places)
         return (formatted_float,)
+
+class IntToText:
+    @classmethod
+    def INPUT_TYPES(s):
+        return { "required": { "int_input": ("INT", {"default": 1}), }}
+
+    RETURN_TYPES = ("STRING",)
+    FUNCTION = "convert_to_str"
+    CATEGORY = "EasyGrids"
+
+    def convert_to_str(self, int_input : int):
+        return (str(int_input),)
 
 class SaveImageGrid:
     def __init__(self):
@@ -285,18 +407,28 @@ class SaveImageGrid:
 
 NODE_CLASS_MAPPINGS = {
     "ImageGridCommander": ImageGridCommander,
-    "GridFloatList": GridFloatList,
     "GridFloats": GridFloats,
+    "GridFloatList": GridFloatList,
+    "GridInts": GridInts,
+    "GridIntList": GridIntList,
+    "GridStrings": GridStrings,
+    "GridStringList": GridStringList,
     "TextConcatenator": TextConcatenator,
     "FloatToText": FloatToText,
+    "IntToText": IntToText,
     "SaveImageGrid": SaveImageGrid,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
     "ImageGridCommander": "Create Image Grid",
-    "GridFloatList": "Float List fom Text",
     "GridFloats" : "Float List",
+    "GridFloatList": "Float List fom Text Field",
+    "GridInts": "Int List",
+    "GridIntList": "Int List from Text Field",
+    "GridStrings": "String List",
+    "GridStringList": "String List from Text Field",
     "TextConcatenator": "Text Concatenator",
     "FloatToText": "Float to Text",
+    "IntToText": "Int to Text",
     "SaveImageGrid": "Save Image Grid",
 }

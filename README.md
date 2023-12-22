@@ -6,9 +6,11 @@ A set of custom nodes for creating image grids, sequences, and batches in [Comfy
 
 * **Create Image Grid** - a node that lets you specify a grid size and then automatically queue up the full number of prompts required, outputting the current x and y position in the grid with each prompt. (It's actually a fully general `for` loop; you might find it useful for purposes other than making grids!)
 * **Save Image Grid** - a modified Save Image node that accumulates images until reaching the number specified in its x_size and y_size inputs, then puts them into a grid. Supports labeling the grid through the 'annotations' input (though there are currently no nodes in this extension that can provide the right output - see Recommended Resources. )
-* **Grid Floats** - Allows you to specify up to 6 floating-point numbers; the output will be selected using the 'index' input.
-* **Grid Float List** - Similar to Grid Floats, but allows you to type in the list of floats manually - in case you need more than 6 or just find the selection widgets cumbersome. Commas, semicolons, colons, and whitespace are all valid delimiters - so e.g. `0.5,2.8:3.33;-2.5` is a valid input that should resolve to the list `[0.5, 2.8, 3.33, -2.5]`.
-* **Float to Text** - Just converts a floating-point number to a text string. Useful for dynamically adjusting token or LoRA strengths.
+* **Float/Int List** - Allows you to specify a list of up to 6 numbers; the output will be selected using the 'index' input.
+* **Float/Int List from Text Field** - Similar to the basic Float/Int List nodes, but allow you to type in the list of numbers manually - in case you need more than 6 or just find the selection widgets cumbersome. Commas, semicolons, colons, and whitespace are all valid delimiters - so e.g. `0.5,2.8:3.33;-2.5 8.1` is a valid input that should resolve to the list `[0.5, 2.8, 3.33, -2.5, 8.1]`.
+* **String List** - Lets you specify a list of up to 6 strings, similar to the Float/Int List nodes.
+* **String List from Text Field** - Lets you enter a list of strings in a text field. Unlike the Float/Int List nodes, each entry in the list must be delimited by a new line.
+* **Float/Int to Text** - Just converts a floating-point number to a text string. Useful for dynamically adjusting token or LoRA strengths, or specifying a list of seeds.
 * **Text Concatenator** - Transforms two strings of text into one string. Useful for adjusting your prompt according to the grid indexes.
 
 ## Future Features
@@ -17,6 +19,7 @@ A set of custom nodes for creating image grids, sequences, and batches in [Comfy
 * **Annotations** - Labeling the output grid is currently supported...but not by any node that's part of this repository.
 * **String Formatting** - Even adjusting a small number of token strengths with the current nodes quickly results in an absolute spaghetti of Text Concatenators. My goal is to have a node that provides `printf`- or `str.format`-like capability, substituting input strings at specified points in the text.
 * **More visual feedback** - Progress bars and automatically updating counters on the Create and Save Image Grid nodes would be super helpful for knowing where you are in the loop. It might also make sense to have Save Image Grid update on the fly with the images it's received so far.
+* **Z-Axis** - A1111 supports an additional axis on its image grids, represented as multiple grids on the final output. This is neat and I'd like to add something similar!
 
 ## How To Use
 
@@ -39,7 +42,11 @@ cd <ComfyUI repo>/custom_nodes
 git clone https://github.com/shockz0rz/comfy-easy-grids.git
 ```
 
-I don't believe there are any additional dependencies beyond what's already installed with ComfyUI; please correct me if I'm wrong on that!
+I don't believe there are any additional dependencies beyond what's already installed with ComfyUI; please let me know if I'm wrong about that!
+
+## Known Issues
+
+* By default, ComfyUI loads up a workflow from the last saved image on startup. Image grids from EasyGrids have their workflow saved in the metadata like any other Comfy image and can be loaded without any issues, but for some reason ComfyUI doesn't seem to automatically load from them on startup.
 
 ## Recommended Resources
 
