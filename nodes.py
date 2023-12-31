@@ -5,8 +5,10 @@ import json
 import os.path
 
 from copy import deepcopy
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 from comfy.cli_args import args
+from comfy.utils import load_torch_file
+from comfy.sd import load_lora_for_models
 from PIL.PngImagePlugin import PngInfo
 from .grid_types import Annotation
 
@@ -30,16 +32,17 @@ class GridFloats:
             },
              }
 
-    RETURN_TYPES = ("FLOAT",)
+    RETURN_TYPES = ("FLOAT","FLOAT_LIST")
+    RETURN_NAMES = ("current value", "list")
     FUNCTION = "ReturnFloat"
     CATEGORY = "EasyGrids"
 
-    def ReturnFloat( self, index: int, float1 : float, float2 : float, float3 : float, float4 : float, float5 : float, float6: float ):
+    def ReturnFloat( self, index: int, float1 : float, float2 : float, float3 : float, float4 : float, float5 : float, float6: float ) -> tuple[float, list[float]]:
         #TODO: probably a more pythonic way to do this
         ret_list = [float1, float2, float3, float4, float5, float6]
         if ( index > len(ret_list) ):
-            return ( ret_list[len(ret_list) - 1], )
-        return (ret_list[ index - 1 ], )
+            return ( ret_list[len(ret_list) - 1], ret_list )
+        return (ret_list[ index - 1 ], ret_list )
 
 class GridFloatList:
     @classmethod
@@ -50,7 +53,8 @@ class GridFloatList:
                 "float_list": ("STRING", {"multiline": True}),
         }}
 
-    RETURN_TYPES = ("FLOAT",)
+    RETURN_TYPES = ("FLOAT","FLOAT_LIST")
+    RETURN_NAMES = ("current value", "list")
     FUNCTION = "ParseAndReturnFloat"
     CATEGORY = "EasyGrids"
 
@@ -58,7 +62,7 @@ class GridFloatList:
         self.static_text = "" 
         self.static_out_arr = []
 
-    def ParseAndReturnFloat( self, index: int, float_list: str ):
+    def ParseAndReturnFloat( self, index: int, float_list: str ) -> tuple[float, list[float]]:
         if float_list != self.static_text:
             split_str = re.split( ",|;|\s|:", float_list )
             out_arr = []
@@ -69,7 +73,7 @@ class GridFloatList:
             self.static_out_arr = deepcopy( out_arr )
         if ( index > len(self.static_out_arr) ):
             return ( self.static_out_arr[len(self.static_out_arr) - 1], )
-        return (self.static_out_arr[ index - 1 ],)
+        return (self.static_out_arr[ index - 1 ],self.static_out_arr)
 
 class GridInts:
     @classmethod
@@ -77,7 +81,7 @@ class GridInts:
         return {
             "required": {
                 "index": ( "INT", {"default": 1, "min": 1 }),
-                "int1": ("INT", {"default": 1, "step": 1 }),
+                "int1": ("INT", {"default": 1, "step": 1}),
                 "int2": ("INT", {"default": 1, "step": 1}),
                 "int3": ("INT", {"default": 1, "step": 1}),
                 "int4": ("INT", {"default": 1, "step": 1}),
@@ -86,15 +90,16 @@ class GridInts:
             },
              }
 
-    RETURN_TYPES = ("INT",)
+    RETURN_TYPES = ("INT","INT_LIST")
+    RETURN_NAMES = ("current value","list")
     FUNCTION = "ReturnInt"
     CATEGORY = "EasyGrids"
 
-    def ReturnInt( self, index: int, int1 : int, int2 : int, int3 : int, int4 : int, int5 : int, int6: int ):
+    def ReturnInt( self, index: int, int1 : int, int2 : int, int3 : int, int4 : int, int5 : int, int6: int )-> tuple[int, list[int]]:
         ret_list = [int1, int2, int3, int4, int5, int6]
         if ( index > len(ret_list) ):
-            return ( ret_list[len(ret_list) - 1], )
-        return (ret_list[ index - 1 ], )
+            return ( ret_list[len(ret_list) - 1], ret_list)
+        return (ret_list[ index - 1 ], ret_list)
 
 class GridIntList:
     @classmethod
@@ -105,7 +110,8 @@ class GridIntList:
                 "int_list": ("STRING", {"multiline": True}),
         }}
 
-    RETURN_TYPES = ("INT",)
+    RETURN_TYPES = ("INT","INT_LIST")
+    RETURN_NAMES = ("current value","list")
     FUNCTION = "ParseAndReturnInt"
     CATEGORY = "EasyGrids"
 
@@ -123,8 +129,8 @@ class GridIntList:
             self.static_text = int_list
             self.static_out_arr = deepcopy( out_arr )
         if ( index > len(self.static_out_arr) ):
-            return ( self.static_out_arr[len(self.static_out_arr) - 1], )
-        return (self.static_out_arr[ index - 1 ],)
+            return ( self.static_out_arr[len(self.static_out_arr) - 1], self.static_out_arr )
+        return (self.static_out_arr[ index - 1 ], self.static_out_arr)
 
 class GridStrings:
     @classmethod
@@ -141,15 +147,16 @@ class GridStrings:
             },
              }
 
-    RETURN_TYPES = ("STRING",)
+    RETURN_TYPES = ("STRING","STRING_LIST")
+    RETURN_NAMES = ("current value","list")
     FUNCTION = "ReturnString"
     CATEGORY = "EasyGrids"
 
-    def ReturnString( self, index: int, string1 : str, string2 : str, string3 : str, string4 : str, string5 : str, string6: str ):
+    def ReturnString( self, index: int, string1 : str, string2 : str, string3 : str, string4 : str, string5 : str, string6: str ) -> tuple[str, list[str]]:
         ret_list = [string1, string2, string3, string4, string5, string6]
         if ( index > len(ret_list) ):
-            return ( ret_list[len(ret_list) - 1], )
-        return (ret_list[ index - 1 ], )
+            return ( ret_list[len(ret_list) - 1], ret_list)
+        return (ret_list[ index - 1 ], ret_list)
 
 class GridStringList:
     @classmethod
@@ -161,7 +168,8 @@ class GridStringList:
             }
         }
 
-    RETURN_TYPES = ("STRING",)
+    RETURN_TYPES = ("STRING","STRING_LIST")
+    RETURN_NAMES = ("current value","list")
     FUNCTION = "SplitAndReturnStrings"
     CATEGORY = "EasyGrids"
 
@@ -177,15 +185,68 @@ class GridStringList:
             self.static_text = string_list
             self.static_out_arr = deepcopy( split_str )
         if ( index > len(self.static_out_arr) ):
-            return ( self.static_out_arr[len(self.static_out_arr) - 1], )
-        return (self.static_out_arr[ index - 1 ],)
+            return ( self.static_out_arr[len(self.static_out_arr) - 1], self.static_out_arr)
+        return (self.static_out_arr[ index - 1 ], self.static_out_arr)
+
+class GridLoras:
+    def __init__(self):
+        self.loaded_lora = None
+
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "index": ( "INT", {"default": 1, "min": 1 }),
+                "model": ("MODEL",),
+                "clip": ("CLIP",),
+                "lora1": (folder_paths.get_filename_list("loras"), ),
+                "lora2": (folder_paths.get_filename_list("loras"), ),
+                "lora3": (folder_paths.get_filename_list("loras"), ),
+                "lora4": (folder_paths.get_filename_list("loras"), ),
+                "lora5": (folder_paths.get_filename_list("loras"), ),
+                "lora6": (folder_paths.get_filename_list("loras"), ),
+                "strength_model": ("FLOAT", {"default": 1.0, "min": -20.0, "max": 20.0, "step": 0.01}),
+                "strength_clip": ("FLOAT", {"default": 1.0, "min": -20.0, "max": 20.0, "step": 0.01}),
+            }}
+    
+    RETURN_TYPES = ("MODEL","CLIP","STRING_LIST")
+    RETURN_NAMES = ("current model","current clip","lora name list")
+    FUNCTION = "ReturnLora"
+    CATEGORY = "EasyGrids"
+
+    def ReturnLora( self, index: int, model, clip, lora1 : str, lora2 : str, lora3 : str, lora4 : str, lora5 : str, lora6: str, strength_model: float, strength_clip: float):
+        ret_list = [lora1, lora2, lora3, lora4, lora5, lora6]
+        target_name = ""
+        if ( index > len(ret_list) ):
+            target_name = ret_list[len(ret_list) - 1]
+        else:
+            target_name = ret_list[ index - 1 ]
+        if strength_model == 0.0 and strength_clip == 0.0:
+            return (model, clip, ret_list)
+        
+        lora_path = folder_paths.get_full_path("loras", target_name)
+        lora = None
+        if self.loaded_lora is not None:
+            if self.loaded_lora[0] == lora_path:
+                lora = self.loaded_lora[1]
+            else:
+                temp = self.loaded_lora
+                self.loaded_lora = None
+                del temp
+        if lora is None:
+            lora = load_torch_file(lora_path, safe_load=True)
+            self.loaded_lora = (lora_path, lora)                
+        model_lora, clip_lora = load_lora_for_models(model, clip, lora, strength_model, strength_clip)
+        return (model_lora, clip_lora, ret_list)
+
+                
 
 class ImageGridCommander:
     @classmethod
     def INPUT_TYPES(s):
         return {
-            "required": { "x_count": ("INT", {"default": 1, "min": 1, "max": 12, "step": 1}),
-                          "y_count": ("INT", {"default": 1, "min": 1, "max": 12, "step": 1}),
+            "required": { "x_count": ("INT", {"default": 1, "min": 1, "step": 1}),
+                          "y_count": ("INT", {"default": 1, "min": 1, "step": 1}),
             },
             "hidden": {
                 "unique_id": "UNIQUE_ID",
@@ -208,7 +269,7 @@ class ImageGridCommander:
         if self.unique_id is not None and self is reset_registry.get(self.unique_id, None):
             reset_registry.pop(self.unique_id, None)
 
-    def queue_batch(self, x_count, y_count, unique_id ):
+    def queue_batch(self, x_count, y_count, unique_id )-> tuple[int, int, int, int]:
         #wish we could do this on init but there doesn't seem to be a way to get the unique_id at that point
         #there shouldn't be any need to reset before the first run in any case
         if unique_id is not None:
@@ -254,7 +315,7 @@ class TextConcatenator:
     FUNCTION = "concat_text"
     CATEGORY = "EasyGrids"
 
-    def concat_text( self, text_1, text_2 ):
+    def concat_text( self, text_1, text_2 )-> tuple[str]:
         #simple as!
         return ((text_1 + text_2), )
 
@@ -268,7 +329,7 @@ class FloatToText:
     FUNCTION = "convert_to_str"
     CATEGORY = "EasyGrids"
 
-    def convert_to_str(self, float_input : float, decimal_places : int):
+    def convert_to_str(self, float_input : float, decimal_places : int) -> tuple[str]:
         # if this doesn't work, blame Copilot
         formatted_float = "{:.{}f}".format(float_input, decimal_places)
         return (formatted_float,)
@@ -282,7 +343,7 @@ class IntToText:
     FUNCTION = "convert_to_str"
     CATEGORY = "EasyGrids"
 
-    def convert_to_str(self, int_input : int):
+    def convert_to_str(self, int_input : int) -> tuple[str]:
         return (str(int_input),)
 
 class SaveImageGrid:
@@ -306,10 +367,12 @@ class SaveImageGrid:
     def INPUT_TYPES(s):
         return {"required": 
                     {"images": ("IMAGE", ),
-                     "x_size": ("INT", {"default": 1, "min": 1, "max": 12, "step": 1}),
-                     "y_size": ("INT", {"default": 1, "min": 1, "max": 12, "step": 1}),
+                     "x_size": ("INT", {"default": 1, "min": 1, "step": 1}),
+                     "y_size": ("INT", {"default": 1, "min": 1, "step": 1}),
                      "filename_prefix": ("STRING", {"default": "ComfyUI"})},
-                "optional" : { "annotations": ("GRID_ANNOTATION",)}, 
+                "optional" : { "column_labels": ("STRING_LIST", {"default": None}),
+                               "row_labels": ("STRING_LIST", {"default": None }),
+                               "images_grid_annotation": ("GRID_ANNOTATION",)}, 
                 "hidden": {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO", "unique_id": "UNIQUE_ID" },
                 }
 
@@ -320,7 +383,7 @@ class SaveImageGrid:
 
     CATEGORY = "EasyGrids"
 
-    def accumulate_images(self, images, x_size, y_size, filename_prefix="ComfyUI", prompt=None, extra_pnginfo=None, annotations=None, unique_id=None):
+    def accumulate_images(self, images, x_size, y_size, filename_prefix="ComfyUI", prompt=None, extra_pnginfo=None, column_labels=None, row_labels=None, images_grid_annotation=None, unique_id=None):
         if unique_id is not None:
             if unique_id != self.unique_id:
                 if self.unique_id is not None and self is reset_registry.get(self.unique_id, None):
@@ -339,38 +402,46 @@ class SaveImageGrid:
             if self.curr_x_idx >= self.curr_x_size:
                 self.curr_y_idx += 1
                 self.curr_x_idx = 0
+        
                 
         if len( self.image_grid ) >= self.curr_x_size * self.curr_y_size:
             #complete grid
-            grid_image = self.assemble_grid( annotations )
+            if images_grid_annotation is not None:
+                column_labels = images_grid_annotation.column_texts
+                row_labels = images_grid_annotation.row_texts
+            grid_image = self.assemble_grid( column_labels, row_labels )
             return self.save_grid( grid_image, filename_prefix, prompt, extra_pnginfo )
         return { "ui": { "images": [] } }
     
-    def assemble_grid( self, annotations: Annotation | None = None ):
+    def assemble_grid( self, column_labels : list[str] | None = None, row_labels : list[str] | None = None ) -> Image:
         space_height = max( [ len(image) for image in self.image_grid ] )
         space_width = max( [ len(image[0]) for image in self.image_grid ] )
         total_width = space_width * self.curr_x_size
         total_height = space_height * self.curr_y_size
         width_padding = 0
         height_padding = 0
-        if annotations is not None:
-            width_padding = int(max( [ annotations.font.getlength( text ) for text in annotations.row_texts ] ) * 1.5)
-            height_padding = int(max( [ ( annotations.font.getbbox( text )[3] - annotations.font.getbbox( text )[1] ) for text in annotations.column_texts ] )  * 1.5)
+        #TODO: font size input, font type input, etc.? Also smarter path detection
+        font_path = os.path.join(os.path.dirname(__file__), "fonts/Roboto-Regular.ttf")
+        label_font = ImageFont.truetype(str(font_path), size=50)
+        if column_labels is not None and len(column_labels) > 0:
+            height_padding = int(max( [ ( label_font.getbbox( text )[3] - label_font.getbbox( text )[1] ) for text in column_labels ] )  * 1.5)
+        if row_labels is not None and len(row_labels) > 0:
+            width_padding = int(max( [ label_font.getlength( text ) for text in row_labels ] ) * 1.5)
         total_width += width_padding
         total_height += height_padding
         with Image.new("RGB", (total_width, total_height), color="#ffffff") as grid_canvas:
             draw = ImageDraw.Draw( grid_canvas )
             for y_idx in range( self.curr_y_size ):
-                if annotations is not None and y_idx < len( annotations.column_texts ):
+                if row_labels is not None and y_idx < len( row_labels ):
                     row_x_anchor = width_padding / 2
                     row_y_anchor = height_padding + space_height * y_idx + ( space_height / 2 )
-                    draw.text((row_x_anchor, row_y_anchor), annotations.row_texts[y_idx], anchor="mm", font=annotations.font, fill="#000000")
+                    draw.text((row_x_anchor, row_y_anchor), row_labels[y_idx], anchor="mm", font=label_font, fill="#000000")
                 for x_idx in range( self.curr_x_size ):
                     if y_idx == 0:
-                        if annotations is not None and x_idx < len( annotations.row_texts ):
+                        if column_labels is not None and x_idx < len( column_labels ):
                             col_x_anchor = width_padding + space_width * x_idx + ( space_width / 2 )
                             col_y_anchor = height_padding / 2
-                            draw.text((col_x_anchor, col_y_anchor), annotations.column_texts[x_idx], anchor="mm", font=annotations.font, fill="#000000")
+                            draw.text((col_x_anchor, col_y_anchor), column_labels[x_idx], anchor="mm", font=label_font, fill="#000000")
                     pil_image = Image.fromarray( np.clip( ( self.image_grid[ ( y_idx * self.curr_x_size ) + x_idx].cpu().numpy() * 255. ), 0, 255 ).astype( np.uint8 ) )
                     grid_canvas.paste(pil_image, ((x_idx * space_width) + width_padding, (y_idx * space_height) + height_padding ))
             return grid_canvas
@@ -413,6 +484,7 @@ NODE_CLASS_MAPPINGS = {
     "GridIntList": GridIntList,
     "GridStrings": GridStrings,
     "GridStringList": GridStringList,
+    "GridLoras": GridLoras,
     "TextConcatenator": TextConcatenator,
     "FloatToText": FloatToText,
     "IntToText": IntToText,
@@ -427,6 +499,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "GridIntList": "Int List from Text Field",
     "GridStrings": "String List",
     "GridStringList": "String List from Text Field",
+    "GridLoras": "Lora List",
     "TextConcatenator": "Text Concatenator",
     "FloatToText": "Float to Text",
     "IntToText": "Int to Text",
