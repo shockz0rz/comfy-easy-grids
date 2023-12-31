@@ -55,13 +55,8 @@ app.registerExtension({
             {
                 const x_widget = node.widgets.find((w) => w.name === "x_count");
                 const y_widget = node.widgets.find((w) => w.name === "y_count");
-                for ( let queue_x = 1; queue_x <= x_widget.value; queue_x++ )
-                {
-                    for ( let queue_y = 1; queue_y <= y_widget.value; queue_y++ )
-                    {
-                        app.queuePrompt(1, 1);
-                    }
-                }
+                let batch_size = x_widget.value * y_widget.value;
+                app.queuePrompt(0, batch_size);
             });
             node.addWidget( "button", "Reset Grid Loop", "ResetButton", () =>
             {

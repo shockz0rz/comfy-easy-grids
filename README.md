@@ -17,10 +17,10 @@ A set of custom nodes for creating image grids, sequences, and batches in [Comfy
 ## Future Features
 
 * **More List-Selector Nodes** - Loop through integers! Strings! Checkpoints! LoRAs! Anything in ComfyUI that you have more than one of!
-* **Annotations** - Labeling the output grid is currently supported...but not by any node that's part of this repository.
 * **String Formatting** - Even adjusting a small number of token strengths with the current nodes quickly results in an absolute spaghetti of Text Concatenators. My goal is to have a node that provides `printf`- or `str.format`-like capability, substituting input strings at specified points in the text.
 * **More visual feedback** - Progress bars and automatically updating counters on the Create and Save Image Grid nodes would be super helpful for knowing where you are in the loop. It might also make sense to have Save Image Grid update on the fly with the images it's received so far.
 * **Z-Axis** - A1111 supports an additional axis on its image grids, represented as multiple grids on the final output. This is neat and I'd like to add something similar!
+* **More Accumulator Nodes** - If your desired labels don't match the output of a String List node exactly, it's a bit of a pain to automate the process of generating them. One addition that would be helpful for this would be to create nodes that accumulate their inputs over each loop and output a list of all inputs received.
 
 ## How To Use
 
@@ -47,7 +47,6 @@ I don't believe there are any additional dependencies beyond what's already inst
 
 ## Known Issues
 
-* By default, ComfyUI loads up a workflow from the last saved image on startup. Image grids from EasyGrids have their workflow saved in the metadata like any other Comfy image and can be loaded without any issues, but for some reason ComfyUI doesn't seem to automatically load from them on startup.
 * The LoRA List node does not support a selection of "None".
 
 ## Recommended Resources
