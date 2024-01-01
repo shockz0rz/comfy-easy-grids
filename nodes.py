@@ -23,6 +23,7 @@ class GridFloats:
         return { 
             "required": {
                 "index": ( "INT", {"default": 1, "min": 1 } ),
+                "decimal_places": ("INT", {"default": 3, "min": 1}),
                 "float1": ("FLOAT", {"default": 1.0, "step": 0.01}),
                 "float2": ("FLOAT", {"default": 1.0, "step": 0.01}),
                 "float3": ("FLOAT", {"default": 1.0, "step": 0.01}),
@@ -32,17 +33,20 @@ class GridFloats:
             },
              }
 
-    RETURN_TYPES = ("FLOAT","FLOAT_LIST")
-    RETURN_NAMES = ("current value", "list")
+    RETURN_TYPES = ("FLOAT","FLOAT_LIST","STRING_LIST")
+    RETURN_NAMES = ("current value", "list", "list text")
     FUNCTION = "ReturnFloat"
     CATEGORY = "EasyGrids"
 
-    def ReturnFloat( self, index: int, float1 : float, float2 : float, float3 : float, float4 : float, float5 : float, float6: float ) -> tuple[float, list[float]]:
+    def ReturnFloat( self, index: int, decimal_places: int, float1 : float, float2 : float, float3 : float, float4 : float, float5 : float, float6: float ) -> tuple[float, list[float], list[str]]:
         #TODO: probably a more pythonic way to do this
         ret_list = [float1, float2, float3, float4, float5, float6]
+        ret_val = 0.0
         if ( index > len(ret_list) ):
-            return ( ret_list[len(ret_list) - 1], ret_list )
-        return (ret_list[ index - 1 ], ret_list )
+            ret_val = ret_list[-1]
+        else:
+            ret_val = ret_list[ index - 1 ]
+        return (ret_val, ret_list, ["{:.{}f}".format(val, decimal_places) for val in ret_list] )
 
 class GridFloatList:
     @classmethod
@@ -50,11 +54,12 @@ class GridFloatList:
         return {
             "required": {
                 "index": ( "INT", {"default": 1, "min": 1, "max": 100 } ),
+                "decimal_places": ("INT", {"default": 3, "min": 1}),
                 "float_list": ("STRING", {"multiline": True}),
         }}
 
-    RETURN_TYPES = ("FLOAT","FLOAT_LIST")
-    RETURN_NAMES = ("current value", "list")
+    RETURN_TYPES = ("FLOAT","FLOAT_LIST","STRING_LIST")
+    RETURN_NAMES = ("current value", "list", "list text")
     FUNCTION = "ParseAndReturnFloat"
     CATEGORY = "EasyGrids"
 
@@ -62,7 +67,7 @@ class GridFloatList:
         self.static_text = "" 
         self.static_out_arr = []
 
-    def ParseAndReturnFloat( self, index: int, float_list: str ) -> tuple[float, list[float]]:
+    def ParseAndReturnFloat( self, index: int, decimal_places: int, float_list: str ) -> tuple[float, list[float], list[str]]:
         if float_list != self.static_text:
             split_str = re.split( ",|;|\s|:", float_list )
             out_arr = []
@@ -71,9 +76,12 @@ class GridFloatList:
                 out_arr.append(float(val))
             self.static_text = float_list
             self.static_out_arr = deepcopy( out_arr )
+        ret_val = 0.0
         if ( index > len(self.static_out_arr) ):
-            return ( self.static_out_arr[len(self.static_out_arr) - 1], )
-        return (self.static_out_arr[ index - 1 ],self.static_out_arr)
+            ret_val = self.static_out_arr[-1]
+        else:
+            ret_val = self.static_out_arr[ index - 1 ]
+        return (ret_val,self.static_out_arr, ["{:.{}f}".format(val, decimal_places) for val in self.static_out_arr])
 
 class GridInts:
     @classmethod
@@ -90,16 +98,19 @@ class GridInts:
             },
              }
 
-    RETURN_TYPES = ("INT","INT_LIST")
-    RETURN_NAMES = ("current value","list")
+    RETURN_TYPES = ("INT","INT_LIST","STRING_LIST")
+    RETURN_NAMES = ("current value","list", "list text")
     FUNCTION = "ReturnInt"
     CATEGORY = "EasyGrids"
 
-    def ReturnInt( self, index: int, int1 : int, int2 : int, int3 : int, int4 : int, int5 : int, int6: int )-> tuple[int, list[int]]:
+    def ReturnInt( self, index: int, int1 : int, int2 : int, int3 : int, int4 : int, int5 : int, int6: int )-> tuple[int, list[int], list[str]]:
         ret_list = [int1, int2, int3, int4, int5, int6]
+        ret_val = 0
         if ( index > len(ret_list) ):
-            return ( ret_list[len(ret_list) - 1], ret_list)
-        return (ret_list[ index - 1 ], ret_list)
+            ret_val = ret_list[-1]
+        else:
+            ret_val = ret_list[ index - 1 ]
+        return (ret_val, ret_list, [str(val) for val in ret_list])
 
 class GridIntList:
     @classmethod
@@ -110,8 +121,8 @@ class GridIntList:
                 "int_list": ("STRING", {"multiline": True}),
         }}
 
-    RETURN_TYPES = ("INT","INT_LIST")
-    RETURN_NAMES = ("current value","list")
+    RETURN_TYPES = ("INT","INT_LIST","STRING_LIST")
+    RETURN_NAMES = ("current value","list","list text")
     FUNCTION = "ParseAndReturnInt"
     CATEGORY = "EasyGrids"
 
@@ -119,7 +130,7 @@ class GridIntList:
         self.static_text = "" 
         self.static_out_arr = []
 
-    def ParseAndReturnInt( self, index: int, int_list: str ):
+    def ParseAndReturnInt( self, index: int, int_list: str ) -> tuple[int, list[int], list[str]]:
         if int_list != self.static_text:
             split_str = re.split( ",|;|\s|:", int_list )
             out_arr = []
@@ -128,9 +139,12 @@ class GridIntList:
                 out_arr.append(int(val))
             self.static_text = int_list
             self.static_out_arr = deepcopy( out_arr )
+        ret_val = 0
         if ( index > len(self.static_out_arr) ):
-            return ( self.static_out_arr[len(self.static_out_arr) - 1], self.static_out_arr )
-        return (self.static_out_arr[ index - 1 ], self.static_out_arr)
+            ret_val = self.static_out_arr[-1]
+        else:
+            ret_val = self.static_out_arr[ index - 1 ]
+        return (ret_val, self.static_out_arr, [str(val) for val in self.static_out_arr])
 
 class GridStrings:
     @classmethod
@@ -177,7 +191,7 @@ class GridStringList:
         self.static_text = "" 
         self.static_out_arr = []
 
-    def SplitAndReturnStrings( self, index: int, string_list: str ):
+    def SplitAndReturnStrings( self, index: int, string_list: str ) -> tuple[str, list[str]]:
         if string_list != self.static_text:
             # unlike the numeric list nodes, we only want to split on newlines
             # TODO: support manual delimiter specification?
@@ -194,17 +208,19 @@ class GridLoras:
 
     @classmethod
     def INPUT_TYPES(s):
+        lora_list = folder_paths.get_filename_list("loras")
+        lora_list.insert(0, "None")
         return {
             "required": {
                 "index": ( "INT", {"default": 1, "min": 1 }),
                 "model": ("MODEL",),
                 "clip": ("CLIP",),
-                "lora1": (folder_paths.get_filename_list("loras"), ),
-                "lora2": (folder_paths.get_filename_list("loras"), ),
-                "lora3": (folder_paths.get_filename_list("loras"), ),
-                "lora4": (folder_paths.get_filename_list("loras"), ),
-                "lora5": (folder_paths.get_filename_list("loras"), ),
-                "lora6": (folder_paths.get_filename_list("loras"), ),
+                "lora1": (lora_list, ),
+                "lora2": (lora_list, ),
+                "lora3": (lora_list, ),
+                "lora4": (lora_list, ),
+                "lora5": (lora_list, ),
+                "lora6": (lora_list, ),
                 "strength_model": ("FLOAT", {"default": 1.0, "min": -20.0, "max": 20.0, "step": 0.01}),
                 "strength_clip": ("FLOAT", {"default": 1.0, "min": -20.0, "max": 20.0, "step": 0.01}),
             }}
@@ -218,10 +234,10 @@ class GridLoras:
         ret_list = [lora1, lora2, lora3, lora4, lora5, lora6]
         target_name = ""
         if ( index > len(ret_list) ):
-            target_name = ret_list[len(ret_list) - 1]
+            target_name = ret_list[-1]
         else:
             target_name = ret_list[ index - 1 ]
-        if strength_model == 0.0 and strength_clip == 0.0:
+        if target_name == "None" or ( strength_model == 0.0 and strength_clip == 0.0 ):
             return (model, clip, ret_list)
         
         lora_path = folder_paths.get_full_path("loras", target_name)
@@ -308,16 +324,25 @@ class ImageGridCommander:
 class TextConcatenator:
     @classmethod
     def INPUT_TYPES(s):
-        return { "required" : { "text_1": ("STRING", {"multiline": True}),
-                                "text_2": ("STRING", {"multiline": True}), } }
+        return { "required" : { "text_1": ("STRING", {"multiline": True}) },
+                 "optional" : { "text_2": ("STRING", {"multiline": True}),
+                                "text_3": ("STRING", {"multiline": True}),
+                                "text_4": ("STRING", {"multiline": True}) } }
 
     RETURN_TYPES = ("STRING",)
     FUNCTION = "concat_text"
     CATEGORY = "EasyGrids"
 
-    def concat_text( self, text_1, text_2 )-> tuple[str]:
+    def concat_text( self, text_1, text_2, text_3, text_4 )-> tuple[str]:
         #simple as!
-        return ((text_1 + text_2), )
+        ret_accum = text_1
+        if text_2 is not None:
+            ret_accum += text_2
+        if text_3 is not None:
+            ret_accum += text_3
+        if text_4 is not None:
+            ret_accum += text_4
+        return (ret_accum, )
 
 class FloatToText:
     @classmethod
