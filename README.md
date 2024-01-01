@@ -47,7 +47,7 @@ I don't believe there are any additional dependencies beyond what's already inst
 
 ## Known Issues
 
-* The LoRA List node does not support a selection of "None".
+* None at the moment. Please raise an issue if you find a problem!
 
 ## Recommended Resources
 
